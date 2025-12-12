@@ -6,6 +6,7 @@ from services.calculations import calculate_totals, build_interface_allocations,
 
 router = APIRouter(prefix="/v1/readings")
 
+
 @router.get('/summary/{month}')
 def month_summary(month: str, session: Session = Depends(get_session)):
 
