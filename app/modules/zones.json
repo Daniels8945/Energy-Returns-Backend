@@ -1,0 +1,81 @@
+
+[
+    {
+        "name": "Bauchi",
+        "feeder_ids": [765, 770, 773, 774],
+        "trading_points": [
+            {
+                "name": "GRA/PALACE",
+                "feeder_ids": [765]
+            },
+            {
+                "name": "GUBI",
+                "feeder_ids": [770, 773, 774]
+            }
+        ]
+    },
+        {
+            "name": "Gombe",
+            "feeder_ids": [747, 748, 751, 743, 736, 772],
+            "trading_points": [
+                {
+                    "name": "ASHAKA",
+                    "feeder_ids": [747, 748]
+                },
+                {
+                    "name": "SHONGO",
+                    "feeder_ids": [751, 743]
+                }
+            ]
+        },
+        {
+            "name": "Makari Jos",
+            "feeder_ids": [728, 733, 813, 815, 739, 727, 806, 807, 808],
+            "trading_points": [
+                {
+                    "name": "MAKERI",
+                    "feeder_ids": [733, 806, 807, 808]
+                },
+                {
+                    "name": "NEW GOVT. HOUSE JOS",
+                    "feeder_ids": [727]
+                },
+                {
+                    "name": "SECRETARIAT",
+                    "feeder_ids": [813, 815, 739]
+                },
+                {
+                    "name": "BUKURU",
+                    "feeder_ids": [728]
+                }
+            ]
+        },
+        {
+            "name": "Zaria Road Jos",
+            "feeder_ids": [816, 826],
+            "trading_points": [
+                {
+                    "name": "ANGLO JOS",
+                    "feeder_ids": [816]
+                },
+                {
+                    "name": "DOGON DUTSE",
+                    "feeder_ids": [826]
+                }
+            ]
+        },
+        {
+            "name": "Yandev Gboko",
+            "feeder_ids": [752, 754],
+            "trading_points": [
+                {
+                    "name": "DCP1",
+                    "feeder_ids": [752]
+                },
+                {
+                    "name": "DCP 2",
+                    "feeder_ids": [754]
+                }
+            ]
+        }
+]
