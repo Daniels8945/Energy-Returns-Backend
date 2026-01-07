@@ -1,6 +1,76 @@
 from modules.feeders import LoadFeeders
-from sqlmodel import select, Session
 from models import Feeder
+from sqlmodel import Session, select
+from models import FeederMetrics
+from collections import defaultdict
+from datetime import datetime
+from typing import Optional
+
+
+def get_feeder_snapshot(
+    session: Session,
+    snapshot_time: Optional[datetime] = None
+):
+    """
+    Fetch feeder metrics grouped by:
+    Zone → Trading Point → Feeders
+    """
+
+    stmt = select(FeederMetrics)
+
+    if snapshot_time:
+        stmt = stmt.where(FeederMetrics.snapshot_time == snapshot_time)
+    else:
+        # Default: latest snapshot
+        latest_stmt = select(FeederMetrics.snapshot_time).order_by(
+            FeederMetrics.snapshot_time.desc()
+        )
+        snapshot_time = session.exec(latest_stmt).first()
+        stmt = stmt.where(FeederMetrics.snapshot_time == snapshot_time)
+
+    records = session.exec(stmt).all()
+
+    zones_map = defaultdict(lambda: defaultdict(list))
+
+    for r in records:
+        zones_map[r.zone][r.trading_point].append({
+            "feeder_id": r.feeder_external_id,
+            "name": r.feeder_name,
+            "consumption_kwh": r.consumption_kwh,
+            "uptime_hours": r.uptime_hours,
+            "voltage_class": r.voltage_class,
+            "station": r.station,
+            "status": r.status
+        })
+
+    response = []
+
+    for zone_name, trading_points in zones_map.items():
+        zone_obj = {
+            "zone": zone_name,
+            "trading_points": []
+        }
+
+        for tp_name, feeders in trading_points.items():
+            zone_obj["trading_points"].append({
+                "name": tp_name,
+                "feeders": feeders
+            })
+
+        response.append(zone_obj)
+
+    return {
+        "snapshot_time": snapshot_time,
+        "Zone": response
+    }
+
+
+
+
+
+
+
+
 
 # Synchronizes feeders from external API into local database
 def sync_feeders_from_api(

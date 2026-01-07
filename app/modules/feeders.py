@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from dotenv import load_dotenv
 import os
 import requests
@@ -35,7 +35,6 @@ class LoadFeeders():
 # Normalize raw feeder data into structured format
     def normalize(self):
         raw = self.fetch()
-
         feeders = []
         for f in raw:
             feeders.append({
@@ -55,16 +54,15 @@ class LoadFeeders():
         return feeders
 
 
-
 #  Saves feeder metrics to the database
 #  Payload is expected to be a list of zones, each containing trading points and feeders with their metrics
-#  Below is an example structure of the expected payload
 
     def save_feeder_metrics(
             self,
             session: Session,
-            # snapshot_time: datetime,
-            feeder_data: dict, zone_name: str,
+            snapshot_time: datetime,
+            feeder_data: dict,
+            zone_name: str,
             trading_point_name: str
     ) -> bool:
         """ 
@@ -72,11 +70,10 @@ class LoadFeeders():
             Idempotently save feeder metrics.
             Returns True if inserted, False if updated.
         """
-        # records = []
 
         stmt = select(FeederMetrics).where(
             FeederMetrics.feeder_external_id == feeder_data["feederId"],
-            # FeederMetrics.recorded_at == snapshot_time
+            FeederMetrics.snapshot_time == snapshot_time
         )
         existing = session.exec(stmt).first()
 
@@ -84,24 +81,21 @@ class LoadFeeders():
             existing.consumption_kwh = feeder_data["actualEnergyConsumption"]
             existing.uptime_hours = feeder_data["upTimeHours"]
             existing.status = feeder_data["status"]
-            # session.add(existing) # Avoid duplicate entries for the same snapshot time
             return False
-        else:
-            record = FeederMetrics(
-                feeder_external_id=feeder_data["feederId"],
-                feeder_name=feeder_data["name"],
-                consumption_kwh=feeder_data["actualEnergyConsumption"],
-                uptime_hours=feeder_data["upTimeHours"],
-                voltage_class=feeder_data["voltageClass"],
-                station=feeder_data["station"],
-                status=feeder_data["status"],
-                # recorded_at=snapshot_time,
-                zone=zone_name,
-                trading_point=trading_point_name,
-            )
-            session.add(record)
-            # records.append(record)
-            # session.commit()
+        # else:
+        record = FeederMetrics(
+            feeder_external_id=feeder_data["feederId"],
+            feeder_name=feeder_data["name"],
+            consumption_kwh=feeder_data["actualEnergyConsumption"],
+            uptime_hours=feeder_data["upTimeHours"],
+            voltage_class=feeder_data["voltageClass"],
+            station=feeder_data["station"],
+            status=feeder_data["status"],
+            snapshot_time=snapshot_time,
+            zone=zone_name,
+            trading_point=trading_point_name,
+        )
+        session.add(record)
         return True
 
 
@@ -118,6 +112,9 @@ class LoadFeeders():
         inserts = 0
         updates = 0
 
+        snapshot_time = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+
+
         for zone in zones:
             zone_obj = {
                 "zone": zone["name"],
@@ -125,6 +122,7 @@ class LoadFeeders():
             }
 
             for tp in zone["trading_points"]:
+
                 feeders = []
 
                 for feeder_id in tp["feeder_ids"]:
@@ -137,19 +135,12 @@ class LoadFeeders():
                     inserted = self.save_feeder_metrics(
                         session=session,
                         feeder_data=feeder_data,
-                        # feeder_data={
-                        #     "id": feeder_id,
-                        #     **feeder_data
-                        # },
                         zone_name=zone["name"],
                         trading_point_name=tp["name"],
-                        # snapshot_time=snapshot_time
+                        snapshot_time=snapshot_time
                     )
-
-                    if inserted:
-                        inserts += 1
-                    else:
-                        updates += 1
+                    inserts += int(inserted)
+                    updates += int(not inserted)
          
                     feeders.append({
                         "feeder_id": feeder_id,
@@ -178,13 +169,75 @@ class LoadFeeders():
             "updates": updates,
             # "snapshot_time": snapshot_time
         }
-    
+
+
+# save all feeder data into a new row from the API
+
+    def ingest_all_feeders(self, 
+                           session: Session,
+            ):
+        
+        def set_snapshot_time():
+            now = datetime.utcnow()
+            minute = (now.minute // 5) * 5
+            return now.replace(minute= minute, second=0, microsecond=0)
+        
+        snapshot_time = set_snapshot_time()
+
+        feeder_index = self.index_feeders()
+
+        inserted = 0
+        updated = 0
+
+        for zone in zones:
+            zone_name = zone["name"]
+
+            # location = feeder_zone_map.get(feeder_id)
+            for trading_point in zone["trading_points"]:
+                tp_name = trading_point["name"]
+
+                for feeder_id in trading_point["feeder_ids"]:
+                    feeder = feeder_index.get(feeder_id)
+
+                    if not feeder: # if feeder not mapped in zone.json file
+                        continue
+
+                    feeder_payload = {
+                        "feederId": feeder_id,
+                        "name": feeder["name"],
+                        "actualEnergyConsumption": feeder["actualEnergyConsumption"],
+                        "upTimeHours": feeder["upTimeHours"],
+                        "voltageClass": feeder["voltageClass"],
+                        "station": feeder["station"],
+                        "status": feeder["status"],
+                    }
+
+                    inserted_flag = self.save_feeder_metrics(
+                        session=session,
+                        feeder_data=feeder_payload,
+                        zone_name=zone_name,
+                        trading_point_name=tp_name,
+                        snapshot_time=snapshot_time
+                    )
+                    inserted += int(inserted_flag)
+                    updated += int(not inserted_flag)
+
+        session.commit()
+
+        return {
+            # "trading_points": location["trading_points"],
+            "snapshot_time": snapshot_time,
+            "inserted": inserted,
+            "updated": updated
+        }
 
 
 
 # Build a mapping of feeder IDs to their respective zones and trading points
     def build_feeder_zone_map(self) -> dict:
+
         mapping = {}
+
         for zone in zones:
             zone_name = zone["name"]
             for tp in zone["trading_points"]:
@@ -196,6 +249,50 @@ class LoadFeeders():
                     }
         return mapping
 
+
+
+
+
+
+
+
+
+# snapshot_time = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+# feeders = self.fetch()
+
+# feeder_zone_map = self.build_feeder_zone_map()
+# live_feeders = self.fetch()
+
+
+
+
+# stmt = select(FeederMetrics).where(
+#     FeederMetrics.feeder_external_id == feeder["feederId"],
+#     FeederMetrics.recorded_at == snapshot_time
+# )
+
+# existing = session.exec(stmt).first()
+
+# if existing:
+#     existing.consumption_kwh = feeder["actualEnergyConsumption"]
+#     existing.uptime_hours = feeder["upTimeHours"]
+#     existing.status = feeder["status"]
+#     updated += 1
+#     continue
+
+# record = FeederMetrics(
+#     feeder_external_id=feeder["feederId"],
+#     feeder_name=feeder["name"],
+#     station=feeder["station"],
+#     voltage_class=feeder["voltageClass"],
+#     consumption_kwh=feeder["actualEnergyConsumption"],
+#     uptime_hours=feeder["upTimeHours"],
+#     status=feeder["status"],
+#     snapshot_time=snapshot_time
+# )
+
+# session.add(record)
+# inserted += 1
 
 
 # Example fields from external API:

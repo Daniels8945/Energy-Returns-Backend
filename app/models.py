@@ -57,10 +57,13 @@ class FeederMetrics(SQLModel, table=True):
     trading_point: str
     status: int  # 1 = online, 0 = offline
 
-    # snapshot_time: datetime = Field(index=True)
+    snapshot_time: datetime = Field(index=True)
     recorded_at: datetime = Field(default_factory=datetime.utcnow)
 
     __table_args__ = (
         # prevents duplicates for same feeder + time
-        UniqueConstraint("feeder_external_id", "recorded_at"),
+        UniqueConstraint("feeder_external_id", "snapshot_time"),
     )
+
+
+

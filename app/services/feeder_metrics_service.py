@@ -5,12 +5,18 @@ from modules.feeders import LoadFeeders
 
 # Fetches live feeder data from external API, maps zones, and saves metrics to DB
 def get_and_save_feeder_metrics_from_api(session: Session):
-    snapshot_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+    # snapshot_time = datetime.now().replace(minute=0, second=0, microsecond=0)
     result = LoadFeeders().map_zones_with_live_data(
         session,
         # snapshot_time
     )
     return result
+
+def insert_new_feeder_data(session: Session):
+    insert = LoadFeeders().ingest_all_feeders(session)
+    return insert
+
+
 
 
 #  Example payload structure:
