@@ -7,11 +7,7 @@ import json
 from sqlmodel import Session, select
 from models import FeederMetrics
 
-
-
-
 load_dotenv()
-
 
 with open(os.path.join(os.path.dirname(__file__), 'zones.json')) as f:
     zones = json.load(f)
