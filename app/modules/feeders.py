@@ -9,8 +9,6 @@ from models import FeederMetrics
 
 load_dotenv()
 
-#  remove .env dependency now that env vars are set in deployment environment
-
 with open(os.path.join(os.path.dirname(__file__), 'zones.json')) as f:
     zones = json.load(f)
     
