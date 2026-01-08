@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from db import init_db
+from database.db import init_db
 from api.v1 import feeder_metrics
+from services.scheduler import start_scheduler
 
 # from Junk import feeders as feeders_router
 # from api.v1 import readings
@@ -20,8 +21,7 @@ app.include_router(feeder_metrics.router)
 @app.on_event('startup')
 def on_startup():
     init_db()
-
-
+    start_scheduler()
 
 app.add_middleware(
     CORSMiddleware,

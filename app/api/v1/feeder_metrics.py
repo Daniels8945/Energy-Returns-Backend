@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Path
 from sqlmodel import Session, select
-from db import get_session
+from database.db import get_session
 from services.feeder_metrics_service import get_and_save_feeder_metrics_from_api, insert_new_feeder_data
 from models import FeederMetrics
 from datetime import datetime
@@ -78,3 +78,11 @@ def feeder_history(
         "count": len(data),
         "data": data
     }
+
+
+
+@router.post("/metrics/snapshot/run")
+def run_snapshot_now():
+    from jobs.feeder_snapshot_job import run_feeder_snapshot
+    run_feeder_snapshot()
+    return {"status": "ok", "message": "Snapshot executed"}

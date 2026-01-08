@@ -25,6 +25,14 @@
                 {
                     "name": "SHONGO",
                     "feeder_ids": [751, 743]
+                },
+                {
+                    "name": "FMC GOMBE",
+                    "feeder_ids": [736, 772]
+                },
+                {
+                    "name": "ASHAKA I",
+                    "feeder_ids": [736, 772]
                 }
             ]
         },
