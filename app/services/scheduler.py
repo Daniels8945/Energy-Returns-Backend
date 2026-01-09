@@ -12,7 +12,7 @@
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from app.jobs.feeder_snapshot_job import run_feeder_snapshot
+from jobs.feeder_snapshot_job import run_feeder_snapshot
 
 scheduler = BackgroundScheduler(timezone="UTC")
 
