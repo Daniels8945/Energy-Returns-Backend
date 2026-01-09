@@ -12,14 +12,14 @@
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from jobs.feeder_snapshot_job import run_feeder_snapshot
+from app.jobs.feeder_snapshot_job import run_feeder_snapshot
 
 scheduler = BackgroundScheduler(timezone="UTC")
 
 def start_scheduler():
     scheduler.add_job(
         run_feeder_snapshot,
-        trigger=CronTrigger(minute=5),  # every hour on the hour
+        trigger=CronTrigger(minute="*/2"), # Every 2 minutes
         id="feeder_snapshot_job",
         replace_existing=True,
         max_instances=1,

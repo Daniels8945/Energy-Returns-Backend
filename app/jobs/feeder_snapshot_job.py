@@ -10,7 +10,7 @@ def run_feeder_snapshot():
     service = LoadFeeders()
 
     with Session(engine) as session:
-        result = service.map_zones_with_live_data(session)
+        result = service.ingest_all_feeders(session)
 
         print(
             f"[APSCHEDULER] Snapshot completed | "

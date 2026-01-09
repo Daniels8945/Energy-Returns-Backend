@@ -169,7 +169,7 @@ class LoadFeeders():
         }
 
 
-# save all feeder data into a new row from the API
+# save all feeder data into a new row on the database from the API
 
     def ingest_all_feeders(self, 
                            session: Session,
