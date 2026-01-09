@@ -15,6 +15,6 @@ def run_feeder_snapshot():
         print(
             f"[APSCHEDULER] Snapshot completed | "
             f"Inserted: {result['inserted']} | "
-            f"Updated: {result['updates']} | "
+            f"Updated: {result['updated']} | "
             f"Time: {datetime.utcnow()}"
         )
