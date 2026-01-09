@@ -1,15 +1,3 @@
-# # Using APScheduler
-# from apscheduler.schedulers.background import BackgroundScheduler
-
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(
-#     lambda: service.map_zones_with_live_data(session, zones),
-#     'cron',
-#     hour='*'  # Run every hour
-# )
-# scheduler.start()
-
-
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from jobs.feeder_snapshot_job import run_feeder_snapshot
