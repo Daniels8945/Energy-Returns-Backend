@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 import os
 import requests
@@ -19,6 +19,11 @@ class LoadFeeders():
     def __init__(self):
         self.api_key = os.getenv("API_KEY")
 
+    def set_snapshot_time(self) -> datetime:
+            current_time = timezone(timedelta(hours=1))
+            now = datetime.now(current_time)
+            minute = (now.minute // 5) * 5
+            return now.replace(minute= minute, second=0, microsecond=0)
 
 # Fetch raw feeder data from external API
     def fetch(self):
@@ -52,7 +57,7 @@ class LoadFeeders():
         return feeders
 
 
-#  Saves feeder metrics to the database
+#  Saves feeder metrics and ready to be added to the database
 #  Payload is expected to be a list of zones, each containing trading points and feeders with their metrics
 
     def save_feeder_metrics(
@@ -170,18 +175,9 @@ class LoadFeeders():
 
 
 # save all feeder data into a new row on the database from the API
-
-    def ingest_all_feeders(self, 
-                           session: Session,
-            ):
+    def ingest_all_feeders(self, session: Session):
         
-        def set_snapshot_time():
-            now = datetime.utcnow()
-            minute = (now.minute // 5) * 5
-            return now.replace(minute= minute, second=0, microsecond=0)
-        
-        snapshot_time = set_snapshot_time()
-
+        snapshot_time = self.set_snapshot_time()
         feeder_index = self.index_feeders()
 
         inserted = 0
@@ -223,7 +219,7 @@ class LoadFeeders():
         session.commit()
 
         return {
-            # "trading_points": location["trading_points"],
+            # "trading_points": feeder_index["trading_points"],
             "snapshot_time": snapshot_time,
             "inserted": inserted,
             "updated": updated
@@ -246,68 +242,3 @@ class LoadFeeders():
                         "trading_point": tp_name
                     }
         return mapping
-
-
-
-
-
-
-
-
-
-# snapshot_time = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
-# feeders = self.fetch()
-
-# feeder_zone_map = self.build_feeder_zone_map()
-# live_feeders = self.fetch()
-
-
-
-
-# stmt = select(FeederMetrics).where(
-#     FeederMetrics.feeder_external_id == feeder["feederId"],
-#     FeederMetrics.recorded_at == snapshot_time
-# )
-
-# existing = session.exec(stmt).first()
-
-# if existing:
-#     existing.consumption_kwh = feeder["actualEnergyConsumption"]
-#     existing.uptime_hours = feeder["upTimeHours"]
-#     existing.status = feeder["status"]
-#     updated += 1
-#     continue
-
-# record = FeederMetrics(
-#     feeder_external_id=feeder["feederId"],
-#     feeder_name=feeder["name"],
-#     station=feeder["station"],
-#     voltage_class=feeder["voltageClass"],
-#     consumption_kwh=feeder["actualEnergyConsumption"],
-#     uptime_hours=feeder["upTimeHours"],
-#     status=feeder["status"],
-#     snapshot_time=snapshot_time
-# )
-
-# session.add(record)
-# inserted += 1
-
-
-# Example fields from external API:
-
-# "external_feeder_id": f["feederId"],
-# "upTimeHours": f["upTimeHours"],
-# "voltageUptimeHours": f["voltageUptimeHours"],
-# "voltageStatus": f["voltageStatus"],
-# "status": f["status"],
-# "status_text": "Online" if f["status"] == 1 else "Offline",
-# "station": f["station"],
-# "feeder_id": f["feederId"],
-# "feeder_name": f["name"],
-# "station": f["station"],
-# "interface": f["motherFeederName"],
-# "voltage_level": f["voltageClass"],
-# "category": f["feederCategory"],
-# "consumption_kwh": f["actualEnergyConsumption"],
-# "disco": f["disco"],
-# "state": f["state"]
