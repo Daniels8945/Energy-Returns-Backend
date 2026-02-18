@@ -4,6 +4,8 @@ junk
 data.json
 .env
 
+onction.db
+
 # Logs
 logs
 *.log
