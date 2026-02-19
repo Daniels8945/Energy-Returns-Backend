@@ -34,6 +34,7 @@ jobs:
           script: |
             cd ~/Energy-Returns-Backend
             git pull origin main
+            echo "Last deploy: $(date)" > deploy.log
             source venv/bin/activate
             pip install -r requirements.txt
             pm2 restart energy-backend

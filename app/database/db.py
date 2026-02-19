@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, create_engine, Session
 
-DATABASE_URL = "sqlite:///./onction.db"
+# DATABASE_URL = "sqlite:///./onction.db"
+DATABASE_URL = "sqlite:////root/onction.db"
 engine = create_engine(DATABASE_URL, echo=False)
 
 def init_db():
